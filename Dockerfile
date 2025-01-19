@@ -9,15 +9,11 @@ RUN apt-get update && apt-get install -y \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
+# First copy and install dependencies
+COPY package.json ./
+RUN npm install
 
-# Install dependencies with clean install
-RUN npm cache clean --force && \
-    npm install
-
-# Copy source code
+# Then copy the rest of the code
 COPY . .
 
 # Build TypeScript
