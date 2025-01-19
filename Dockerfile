@@ -1,25 +1,20 @@
-FROM node:16-alpine
+# Use Node.js LTS version
+FROM node:18.19-bullseye
 
 WORKDIR /app
-
-# Install build dependencies
-RUN apk add --no-cache python3 make g++
 
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+# Clean install dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Create dist directory
-RUN mkdir -p dist
-
 # Build TypeScript
-RUN npx tsc
+RUN npm run build
 
 EXPOSE 3000
 
