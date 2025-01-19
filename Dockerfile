@@ -9,9 +9,14 @@ RUN apt-get update && apt-get install -y \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# First copy and install dependencies
-COPY package.json ./
-RUN npm install
+# First copy both package files
+COPY package*.json ./
+
+# Install dependencies with production flag
+RUN npm install --production=false --legacy-peer-deps
+
+# Copy TypeScript config
+COPY tsconfig.json ./
 
 # Then copy the rest of the code
 COPY . .
