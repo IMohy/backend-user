@@ -1,5 +1,5 @@
 # Use Node.js LTS version
-FROM node:18.19-bullseye
+FROM node:19.5.0-alpine
 
 WORKDIR /app
 
