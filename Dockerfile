@@ -1,14 +1,21 @@
 # Use Node.js LTS version
-FROM node:19.5.0-alpine
+FROM node:18.19-bullseye
 
 WORKDIR /app
+
+# Install build essentials
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Clean install dependencies
-RUN npm ci
+# Install dependencies with clean install
+RUN npm cache clean --force && \
+    npm install
 
 # Copy source code
 COPY . .
