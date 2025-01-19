@@ -7,6 +7,7 @@ RUN apk add --no-cache python3 make g++
 
 # Copy package files
 COPY package*.json ./
+COPY tsconfig.json ./
 
 # Install dependencies
 RUN npm install --legacy-peer-deps
@@ -14,8 +15,11 @@ RUN npm install --legacy-peer-deps
 # Copy source code
 COPY . .
 
+# Create dist directory
+RUN mkdir -p dist
+
 # Build TypeScript
-RUN npm run build
+RUN npx tsc
 
 EXPOSE 3000
 
