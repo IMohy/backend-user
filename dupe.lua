@@ -1,4 +1,4 @@
--- Better Custom UI
+-- Better Custom UI with Close Button
 
 local UserInputService = game:GetService("UserInputService")
 
@@ -13,59 +13,72 @@ local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(0, 280, 0, 180)
 mainFrame.Position = UDim2.new(0.5, -140, 0.5, -90)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.BackgroundTransparency = 0.2
+mainFrame.BackgroundTransparency = 0.15
 mainFrame.BorderSizePixel = 0
-mainFrame.Visible = true
 mainFrame.Parent = gui
 
--- Rounded frame
+-- Rounded corners
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 12)
 corner.Parent = mainFrame
 
--- Title
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleBar
+
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 40)
+title.Size = UDim2.new(1, -35, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "🌟 Custom UI"
 title.Font = Enum.Font.GothamBold
-title.TextSize = 22
+title.TextSize = 18
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Parent = mainFrame
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = titleBar
 
--- Layout
-local layout = Instance.new("UIListLayout")
-layout.Parent = mainFrame
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.VerticalAlignment = Enum.VerticalAlignment.Center
-layout.Padding = UDim.new(0, 12)
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0.5, -15)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 16
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Parent = titleBar
 
--- Padding so title isn't covered
-local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 45)
-padding.Parent = mainFrame
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 6)
+closeCorner.Parent = closeBtn
 
--- Function to make nicer buttons
-local function createButton(text, color)
+closeBtn.MouseButton1Click:Connect(function()
+	gui:Destroy() -- fully remove the UI
+end)
+
+-- Button Creator
+local function createButton(text, color, yOffset)
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(0, 200, 0, 45)
+	button.Position = UDim2.new(0.5, -100, 0, yOffset)
 	button.Text = text
 	button.Font = Enum.Font.GothamBold
 	button.TextSize = 18
 	button.TextColor3 = Color3.fromRGB(255, 255, 255)
 	button.BackgroundColor3 = color or Color3.fromRGB(60, 120, 220)
 	button.AutoButtonColor = false
+	button.Parent = mainFrame
 
 	local btnCorner = Instance.new("UICorner")
 	btnCorner.CornerRadius = UDim.new(0, 8)
 	btnCorner.Parent = button
-
-	-- Drop shadow
-	local shadow = Instance.new("UIStroke")
-	shadow.Thickness = 2
-	shadow.Color = Color3.fromRGB(0, 0, 0)
-	shadow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	shadow.Parent = button
 
 	-- Hover effect
 	button.MouseEnter:Connect(function()
@@ -79,13 +92,10 @@ local function createButton(text, color)
 end
 
 -- Buttons
-local markButton = createButton("Send Mark", Color3.fromRGB(0, 170, 255))
-local rejoinButton = createButton("Rejoin Server", Color3.fromRGB(0, 200, 120))
+local markButton = createButton("Send Mark", Color3.fromRGB(0, 170, 255), 60)
+local rejoinButton = createButton("Rejoin Server", Color3.fromRGB(0, 200, 120), 115)
 
-markButton.Parent = mainFrame
-rejoinButton.Parent = mainFrame
-
--- Functionality
+-- Functions
 markButton.MouseButton1Click:Connect(function()
 	game.ReplicatedStorage.Remotes.ClickedMark:FireServer("\u{D800}")
 end)
