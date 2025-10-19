@@ -1,52 +1,169 @@
--- Services
-local TeleportService = game:GetService("TeleportService")
+--// Services
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
--- UI
-local ScreenGui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 200, 0, 120)
-Frame.Position = UDim2.new(0.5, -100, 0.5, -60)
-Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = true
+--// GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AutoDigUI"
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+screenGui.ResetOnSpawn = false
 
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0, 8)
+--// Main Frame
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 240, 0, 180)
+frame.Position = UDim2.new(0.4, 0, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = screenGui
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
--- Buttons
-local MarkButton = Instance.new("TextButton", Frame)
-MarkButton.Size = UDim2.new(1, -20, 0, 40)
-MarkButton.Position = UDim2.new(0, 10, 0, 10)
-MarkButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-MarkButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-MarkButton.Text = "Fire ClickedMark"
+--// Title
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, -35, 0, 30)
+title.Position = UDim2.new(0, 10, 0, 5)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Text = "Rifton Auto Dig + Logger"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.TextXAlignment = Enum.TextXAlignment.Left
 
-local RejoinButton = Instance.new("TextButton", Frame)
-RejoinButton.Size = UDim2.new(1, -20, 0, 40)
-RejoinButton.Position = UDim2.new(0, 10, 0, 60)
-RejoinButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-RejoinButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-RejoinButton.Text = "Reconnect Same Server"
-
-local CloseButton = Instance.new("TextButton", Frame)
-CloseButton.Size = UDim2.new(0, 25, 0, 25)
-CloseButton.Position = UDim2.new(1, -30, 0, 5)
-CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-
--- Button Functions
-MarkButton.MouseButton1Click:Connect(function()
-    game.ReplicatedStorage.Remotes.ClickedMark:FireServer("\u{D800}")
+--// Close Button
+local close = Instance.new("TextButton", frame)
+close.Size = UDim2.new(0, 25, 0, 25)
+close.Position = UDim2.new(1, -30, 0, 5)
+close.BackgroundTransparency = 1
+close.Text = "✖"
+close.TextColor3 = Color3.fromRGB(255, 80, 80)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 18
+close.MouseButton1Click:Connect(function()
+	screenGui:Destroy()
 end)
 
-RejoinButton.MouseButton1Click:Connect(function()
-    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-end)
+--// Buttons
+local function makeButton(text, color, posY)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size = UDim2.new(0.9, 0, 0, 35)
+	btn.Position = UDim2.new(0.05, 0, 0, posY)
+	btn.BackgroundColor3 = color
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.Text = text
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	return btn
+end
 
-CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
+local startButton = makeButton("Start Dig", Color3.fromRGB(50, 200, 50), 40)
+local stopButton  = makeButton("Stop Dig",  Color3.fromRGB(200, 50, 50), 80)
+local sellButton  = makeButton("Sell Inventory", Color3.fromRGB(50, 150, 200), 120)
+local logButton   = makeButton("Start Logger", Color3.fromRGB(150, 100, 250), 160)
+
+--// Digging logic
+local running = false
+local digLoop
+
+local function startDigging()
+	if running then return end
+	running = true
+	game.StarterGui:SetCore("SendNotification", {Title = "Rifton", Text = "Auto Dig Started!", Duration = 3})
+	digLoop = task.spawn(function()
+		while running do
+			local net = ReplicatedStorage:WaitForChild("Network")
+			local rf = net.RemoteFunctions.StartDigging
+			local re = net.RemoteEvents.EndDigging
+			rf:InvokeServer()
+			task.wait(0.1)
+			re:FireServer("Succeeded")
+			task.wait(0.1)
+		end
+	end)
+end
+
+local function stopDigging()
+	running = false
+	game.StarterGui:SetCore("SendNotification", {Title = "Rifton", Text = "Auto Dig Stopped!", Duration = 3})
+end
+
+local function sellInventory()
+	local network = ReplicatedStorage:WaitForChild("Network")
+	local pawn = network.RemoteEvents:WaitForChild("PawnShopInteraction")
+	pawn:FireServer("SellInventory")
+	game.StarterGui:SetCore("SendNotification", {Title = "Rifton", Text = "Inventory sold!", Duration = 3})
+end
+
+--// Logger (for research/debug only)
+local logging = false
+local connections = {}
+
+local function startLogger()
+	if logging then
+		game.StarterGui:SetCore("SendNotification", {Title = "Logger", Text = "Already running.", Duration = 3})
+		return
+	end
+	logging = true
+
+	game.StarterGui:SetCore("SendNotification", {Title = "Logger", Text = "ReplicatedStorage logger started!", Duration = 4})
+	print("=== ReplicatedStorage Logger Started ===")
+
+	local function connectRemote(obj)
+		if obj:IsA("RemoteEvent") then
+			local c = obj.OnClientEvent:Connect(function(...)
+				print("[RemoteEvent]", obj:GetFullName(), ...)
+			end)
+			table.insert(connections, c)
+		elseif obj:IsA("RemoteFunction") then
+			local c = obj.OnClientInvoke:Connect(function(...)
+				print("[RemoteFunction]", obj:GetFullName(), ...)
+			end)
+			table.insert(connections, c)
+		end
+	end
+
+	-- Connect all existing remotes
+	for _, obj in pairs(ReplicatedStorage:GetDescendants()) do
+		if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+			connectRemote(obj)
+		end
+	end
+
+	-- Watch for new remotes being added
+	local c = ReplicatedStorage.DescendantAdded:Connect(function(obj)
+		if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+			connectRemote(obj)
+			print("[Logger] New remote found:", obj:GetFullName())
+		end
+	end)
+	table.insert(connections, c)
+end
+
+local function stopLogger()
+	if not logging then return end
+	logging = false
+	for _, c in pairs(connections) do
+		c:Disconnect()
+	end
+	table.clear(connections)
+	print("=== ReplicatedStorage Logger Stopped ===")
+	game.StarterGui:SetCore("SendNotification", {Title = "Logger", Text = "Logger stopped.", Duration = 3})
+end
+
+--// Button Connections
+startButton.MouseButton1Click:Connect(startDigging)
+stopButton.MouseButton1Click:Connect(stopDigging)
+sellButton.MouseButton1Click:Connect(sellInventory)
+logButton.MouseButton1Click:Connect(function()
+	if not logging then
+		startLogger()
+		logButton.Text = "Stop Logger"
+		logButton.BackgroundColor3 = Color3.fromRGB(255, 120, 50)
+	else
+		stopLogger()
+		logButton.Text = "Start Logger"
+		logButton.BackgroundColor3 = Color3.fromRGB(150, 100, 250)
+	end
 end)
